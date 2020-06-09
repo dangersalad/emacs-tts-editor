@@ -106,6 +106,18 @@
   (when (string= msg "connection broken by remote peer\n")
     (message (format "client %s has quit" proc))))
 
+(defun tts-editor/save-and-play ()
+  "Send scripts to TTS external and reload."
+  (interactive)
+  (message "TTS Save and Play"))
+
+(define-minor-mode tts-editor-mode
+  "TTS External Editor mode."
+  :lighter " TTS"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-x C-s") 'tts-editor/save-and-play)
+            map))
+
 
 (provide 'tts-editor)
 ;;; tts-editor.el ends here
