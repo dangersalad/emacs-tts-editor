@@ -1,0 +1,25 @@
+#+TITLE: tts-editor
+
+* Description
+
+  Elisp implementation of the Tabletop Simulator external editor API.
+
+* Installation
+
+  #+BEGIN_SRC emacs-lisp
+    (use-package
+      :straight (tts-editor :type git
+                            :host github
+                            :repo "dangersalad/emacs-tts-editor"))
+  #+END_SRC
+
+* Progress
+
+  - [X] Handle script loading on game save load
+  - [X] Handle single object script editor loading
+  - [ ] Handle log/error messages
+  - [ ] Handle custom/scripting messages?
+  - [ ] Send updated scripts to TTS
+  - [ ] Send custom messages?
+
+    
