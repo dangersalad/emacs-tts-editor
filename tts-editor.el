@@ -95,7 +95,6 @@
       (tts-editor/write-to-editor-buf "Object Script Loaded"))
      ;; game save loaded
      ((= 1 message-id)
-      (tts-editor/clear-buffers)
       (tts-editor/handle-load scripts)
       (tts-editor/write-to-editor-buf "Scripts Loaded"))
      ;; print/debug message
@@ -148,15 +147,18 @@
   (let ((script-buf (get-buffer-create (format "*tts-editor/%s*" bufname))))
     (add-to-list 'tts-editor/buffer-list script-buf t)
     (with-current-buffer script-buf
-      (erase-buffer)
-      (if (and content (stringp content))
-          (insert content))
-      (save-match-data
-        (cond ((string-match-p "\\.lua$" bufname)
-               (lua-mode))
-              ((string-match-p "\\.xml$" bufname)
-               (xml-mode))))
-      (tts-editor-mode))))
+      (let ((pos (point)))
+        (save-excursion
+          (erase-buffer)
+          (if (and content (stringp content))
+              (insert content))
+          (save-match-data
+            (cond ((string-match-p "\\.lua$" bufname)
+                   (lua-mode))
+                  ((string-match-p "\\.xml$" bufname)
+                   (xml-mode))))
+          (tts-editor-mode))
+        (goto-char pos)))))
 
 (defun tts-editor/listen-sentinel (proc msg)
   "Handle closing the TTS external editor API listener with MSG from PROC.")
