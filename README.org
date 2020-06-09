@@ -8,9 +8,11 @@
 
   #+BEGIN_SRC emacs-lisp
     (use-package
-      :straight (tts-editor :type git
-                            :host github
-                            :repo "dangersalad/emacs-tts-editor"))
+        :straight (tts-editor :type git
+                              :host github
+                              :repo "dangersalad/emacs-tts-editor")
+        :commands (tts-editor/listen-start
+                   tts-editor/listen-stop))
   #+END_SRC
 
 * Progress
@@ -19,7 +21,7 @@
   - [X] Handle single object script editor loading
   - [ ] Handle log/error messages
   - [ ] Handle custom/scripting messages?
-  - [ ] Send updated scripts to TTS
+  - [X] Send updated scripts to TTS
   - [ ] Send custom messages?
 
     
