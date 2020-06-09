@@ -77,6 +77,7 @@
 (defun tts-editor/listen-stop nil
   "Stop the Emacs tcp listener for the TTS external editor API."
   (interactive)
+  (tts-editor/clear-buffers)
   (delete-process tts-editor/listen-name))
 
 (defun tts-editor/listen-filter (proc string)
