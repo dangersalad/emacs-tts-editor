@@ -65,14 +65,14 @@
   "Start an Emacs tcp client listener for the TTS external editor API."
   (interactive)
   (setq tts-editor/listen-process (make-network-process
-   :name tts-editor/listen-name
-   :buffer (tts-editor/listen-buffer-name)
-   :family 'ipv4
-   :host tts-editor/listen-host
-   :service tts-editor/listen-port
-   :sentinel 'tts-editor/listen-sentinel
-   :filter 'tts-editor/listen-filter
-   :server 't)))
+                                   :name tts-editor/listen-name
+                                   :buffer (tts-editor/listen-buffer-name)
+                                   :family 'ipv4
+                                   :host tts-editor/listen-host
+                                   :service tts-editor/listen-port
+                                   :sentinel 'tts-editor/listen-sentinel
+                                   :filter 'tts-editor/listen-filter
+                                   :server 't)))
 
 (defun tts-editor/listen-stop nil
   "Stop the Emacs tcp listener for the TTS external editor API."
@@ -87,12 +87,40 @@
          (json-key-type 'string)
          (json (json-read-from-string string))
          (scripts (gethash "scriptStates" json))
-         (messageID (gethash "messageID" json)))
-    (cond ((= 1 messageID)
-           (tts-editor/clear-buffers)
-           (tts-editor/handle-load scripts))
-          ((= 0 messageID)
-           (tts-editor/handle-load scripts)))))
+         (message-id (gethash "messageID" json)))
+    (cond
+     ;; single object script
+     ((= 0 message-id)
+      (tts-editor/handle-load scripts)
+      (tts-editor/write-to-editor-buf "Object Script Loaded"))
+     ;; game save loaded
+     ((= 1 message-id)
+      (tts-editor/clear-buffers)
+      (tts-editor/handle-load scripts)
+      (tts-editor/write-to-editor-buf "Scripts Loaded"))
+     ;; print/debug message
+     ((= 2 message-id)
+      (tts-editor/write-to-editor-buf (format "TTS Message: %s" (gethash "message" json))))
+     ;; error message
+     ((= 3 message-id)
+      (tts-editor/write-to-editor-buf (format "TTS ERROR: [%s] %s %s"
+                                              (gethash "guid" json)
+                                              (gethash "errorMessagePrefix" json)
+                                              (gethash "error" json))))
+     ;; game saved
+     ((= 6 message-id)
+      (tts-editor/write-to-editor-buf "Game Saved"))
+     
+     (t
+      (tts-editor/write-to-editor-buf string)))))
+
+(defun tts-editor/write-to-editor-buf (&rest args)
+  "Insert ARGS into the listen process buffer."
+  (with-current-buffer (process-buffer tts-editor/listen-process)
+    (goto-char (point-max))
+    (apply 'insert args)
+    (newline)
+    (goto-char (point-max))))
 
 (defun tts-editor/clear-buffers ()
   "Kill TTS script buffers."
@@ -112,34 +140,26 @@
            (data-ui (gethash "ui" script)))
       
       (tts-editor/make-buffer bufname-script data-script)
-      (tts-editor/make-buffer bufname-ui data-ui))))
+      (tts-editor/make-buffer bufname-ui data-ui)
+      (tts-editor/write-to-editor-buf (format "%s loaded" bufname-base)))))
 
 (defun tts-editor/make-buffer (bufname content)
   "Make TTS editor buffer BUFNAME with CONTENT."
   (let ((script-buf (get-buffer-create (format "*tts-editor/%s*" bufname))))
-    (message "making buffer %s" bufname)
     (add-to-list 'tts-editor/buffer-list script-buf t)
-    
     (with-current-buffer script-buf
-      (message "clearing existing content")
       (erase-buffer)
-      (message "inserting new content")
-      (insert (or content ""))
-      (message "detecting mode")
+      (if (and content (stringp content))
+          (insert content))
       (save-match-data
         (cond ((string-match-p "\\.lua$" bufname)
-               (message "setting lua-mode")
                (lua-mode))
               ((string-match-p "\\.xml$" bufname)
-               (message "setting xml-mode")
                (xml-mode))))
-      (message "setting tts-editor-mode")
       (tts-editor-mode))))
 
 (defun tts-editor/listen-sentinel (proc msg)
-  "Handle closing the TTS external editor API listener with MSG from PROC."
-  (when (string= msg "connection broken by remote peer\n")
-    (message (format "client %s has quit" proc))))
+  "Handle closing the TTS external editor API listener with MSG from PROC.")
 
 (defun tts-editor/collect-scripts ()
   "Collect buffer contents as script data objects for sending to TTS."
@@ -162,8 +182,7 @@
           (if (string= script-type "lua")
               (puthash "script" (buffer-string) script-data)
             (puthash "ui" (buffer-string) script-data)))
-        (puthash obj-guid script-data script-hash)
-        (message "ojb=%s, guid=%s, type=%s" obj-name obj-guid script-type)))
+        (puthash obj-guid script-data script-hash)))
     (hash-table-values script-hash)))
 
 
@@ -175,13 +194,12 @@
                tts-editor/connect-host
                tts-editor/connect-port)))
     (process-send-string proc (json-encode data))
-    (process-send-eof tts-editor/connect-process)
     (delete-process proc)))
 
 (defun tts-editor/save-and-play ()
   "Send scripts to TTS external and reload."
   (interactive)
-  (message "TTS Save and Play")
+  (tts-editor/write-to-editor-buf "Save and Play")
   (let ((json-object-type 'hash-table)
         (json-array-type 'list)
         (json-key-type 'string)
