@@ -172,19 +172,20 @@
             script-type
             script-data
             (bufname (buffer-name buf)))
-        (save-match-data
-          (and (string-match "^\\*tts-editor/\\([^-.]+\\)-?\\([0-9a-f]+\\)?\\.\\(lua\\|xml\\)\\*$" bufname)
-               (setq obj-name (match-string 1 bufname)
-                     obj-guid (or (match-string 2 bufname) "-1")
-                     script-type (match-string 3 bufname))))
-        (setq script-data (gethash obj-guid script-hash (make-hash-table :test 'equal)))
-        (puthash "name" obj-name script-data)
-        (puthash "guid" obj-guid script-data)
-        (with-current-buffer buf
-          (if (string= script-type "lua")
-              (puthash "script" (buffer-string) script-data)
-            (puthash "ui" (buffer-string) script-data)))
-        (puthash obj-guid script-data script-hash)))
+        (when bufname
+          (save-match-data
+            (and (string-match "^\\*tts-editor/\\([^-.]+\\)-?\\([0-9a-f]+\\)?\\.\\(lua\\|xml\\)\\*$" bufname)
+                 (setq obj-name (match-string 1 bufname)
+                       obj-guid (or (match-string 2 bufname) "-1")
+                       script-type (match-string 3 bufname))))
+          (setq script-data (gethash obj-guid script-hash (make-hash-table :test 'equal)))
+          (puthash "name" obj-name script-data)
+          (puthash "guid" obj-guid script-data)
+          (with-current-buffer buf
+            (if (string= script-type "lua")
+                (puthash "script" (buffer-string) script-data)
+              (puthash "ui" (buffer-string) script-data)))
+          (puthash obj-guid script-data script-hash))))
     (hash-table-values script-hash)))
 
 
