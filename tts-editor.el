@@ -82,7 +82,7 @@
 
 (defun tts-editor/listen-filter (proc string)
   "Filter message STRING from PROC for the TTS editor API."
-  (let* ((clean-string (replace-regexp-in-string "\n$" "" string))
+  (let* ((clean-string (replace-regexp-in-string "\n" "" string))
          (json (json-parse-string clean-string
                                   :array-type 'list))
          (scripts (gethash "scriptStates" json))
