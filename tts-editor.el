@@ -53,6 +53,9 @@
 (defvar tts-editor/buffer-list ()
   "List of buffers being used by the editor.")
 
+(defvar tts-editor/current-save ""
+  "Current save path being used by the editor.")
+
 (defun tts-editor/listen-buffer-name ()
   "Get the tts editor buffer name."
   (format "*%s*" tts-editor/listen-name))
@@ -147,7 +150,10 @@
            (json (json-parse-string clean-string
                                     :array-type 'list))
            (scripts (gethash "scriptStates" json))
-           (message-id (gethash "messageID" json)))
+           (message-id (gethash "messageID" json))
+           (save-path (gethash "savePath" json)))
+      (if (not (string= save-path tts-editor/current-save))
+          (tts-editor/clear-buffers))
       (cond
        ;; single object script
        ((= 0 message-id)
@@ -209,6 +215,18 @@
                tts-editor/connect-port)))
     (process-send-string proc (json-encode data))
     (delete-process proc)))
+
+(defun tts-editor/reload ()
+  "Close all TTS editor buffers and reload scripts."
+  (interactive)
+  (tts-editor/write-to-editor-buf "Reloading")
+  (tts-editor/clear-buffers)
+  (let ((json-object-type 'hash-table)
+        (json-array-type 'list)
+        (json-key-type 'string)
+        (req (make-hash-table :test 'equal)))
+    (puthash "messageID" 0 req)
+    (tts-editor/send-to-tts req)))
 
 (defun tts-editor/save-and-play ()
   "Send scripts to TTS external and reload."
