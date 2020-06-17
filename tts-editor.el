@@ -150,9 +150,6 @@
            (scripts (gethash "scriptStates" json))
            (message-id (gethash "messageID" json))
            (save-path (gethash "savePath" json)))
-      (if (not (string= save-path tts-editor/current-save))
-          (tts-editor/clear-buffers))
-      (setq tts-editor/current-save save-path)
       (cond
        ;; single object script
        ((= 0 message-id)
@@ -160,6 +157,11 @@
         (tts-editor/write-to-editor-buf "Object Script Loaded"))
        ;; game save loaded
        ((= 1 message-id)
+        (tts-editor/write-to-editor-buf (concat "new save path: " save-path))
+        (tts-editor/write-to-editor-buf (concat "current save path: " tts-editor/current-save))
+        (if (not (string= save-path tts-editor/current-save))
+            (tts-editor/clear-buffers))
+        (setq tts-editor/current-save save-path)
         (tts-editor/handle-load scripts)
         (tts-editor/write-to-editor-buf "Scripts Loaded"))
        ;; print/debug message
