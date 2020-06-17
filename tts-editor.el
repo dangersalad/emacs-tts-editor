@@ -139,9 +139,7 @@
     (if (and
          (not (string= bufname (tts-editor/listen-buffer-name)))
          (equal status 'closed))
-        (tts-editor/process-output-buffer buf))
-    ;; (tts-editor/write-to-editor-buf bufname " " (symbol-name status))
-    ))
+        (tts-editor/process-output-buffer buf))))
 
 (defun tts-editor/process-output-buffer (buf)
   "Process the contents of BUF."
@@ -154,6 +152,7 @@
            (save-path (gethash "savePath" json)))
       (if (not (string= save-path tts-editor/current-save))
           (tts-editor/clear-buffers))
+      (setq tts-editor/current-save save-path)
       (cond
        ;; single object script
        ((= 0 message-id)
