@@ -71,7 +71,6 @@
                                    :host tts-editor/listen-host
                                    :service tts-editor/listen-port
                                    :sentinel 'tts-editor/listen-sentinel
-                                   :filter 'tts-editor/listen-filter
                                    :server 't)))
 
 (defun tts-editor/listen-stop nil
@@ -80,42 +79,11 @@
   (tts-editor/clear-buffers)
   (delete-process tts-editor/listen-name))
 
-(defun tts-editor/listen-filter (proc string)
-  "Filter message STRING from PROC for the TTS editor API."
-  (let* ((clean-string (replace-regexp-in-string "\n" "" string))
-         (json (json-parse-string clean-string
-                                  :array-type 'list))
-         (scripts (gethash "scriptStates" json))
-         (message-id (gethash "messageID" json)))
-    (cond
-     ;; single object script
-     ((= 0 message-id)
-      (tts-editor/handle-load scripts)
-      (tts-editor/write-to-editor-buf "Object Script Loaded"))
-     ;; game save loaded
-     ((= 1 message-id)
-      (tts-editor/handle-load scripts)
-      (tts-editor/write-to-editor-buf "Scripts Loaded"))
-     ;; print/debug message
-     ((= 2 message-id)
-      (tts-editor/write-to-editor-buf (format "TTS Message: %s" (gethash "message" json))))
-     ;; error message
-     ((= 3 message-id)
-      (tts-editor/write-to-editor-buf (format "TTS ERROR: [%s] %s %s"
-                                              (gethash "guid" json)
-                                              (gethash "errorMessagePrefix" json)
-                                              (gethash "error" json))))
-     ;; game saved
-     ((= 6 message-id)
-      (tts-editor/write-to-editor-buf "Game Saved"))
-     
-     (t
-      (tts-editor/write-to-editor-buf string)))))
-
 (defun tts-editor/write-to-editor-buf (&rest args)
   "Insert ARGS into the listen process buffer."
   (with-current-buffer (process-buffer tts-editor/listen-process)
     (goto-char (point-max))
+    (insert (current-time-string) ": ")
     (apply 'insert args)
     (newline)
     (goto-char (point-max))))
@@ -160,7 +128,51 @@
         (goto-char pos)))))
 
 (defun tts-editor/listen-sentinel (proc msg)
-  "Handle closing the TTS external editor API listener with MSG from PROC.")
+  "Handle closing the TTS external editor API listener with MSG from PROC."
+
+  (let* ((status (process-status proc))
+         (buf (process-buffer proc))
+         (bufname (buffer-name buf)))
+    (if (and
+         (not (string= bufname (tts-editor/listen-buffer-name)))
+         (equal status 'closed))
+        (tts-editor/process-output-buffer buf))
+    ;; (tts-editor/write-to-editor-buf bufname " " (symbol-name status))
+    ))
+
+(defun tts-editor/process-output-buffer (buf)
+  "Process the contents of BUF."
+  (with-current-buffer buf
+    (let* ((clean-string (buffer-string))
+           (json (json-parse-string clean-string
+                                    :array-type 'list))
+           (scripts (gethash "scriptStates" json))
+           (message-id (gethash "messageID" json)))
+      (cond
+       ;; single object script
+       ((= 0 message-id)
+        (tts-editor/handle-load scripts)
+        (tts-editor/write-to-editor-buf "Object Script Loaded"))
+       ;; game save loaded
+       ((= 1 message-id)
+        (tts-editor/handle-load scripts)
+        (tts-editor/write-to-editor-buf "Scripts Loaded"))
+       ;; print/debug message
+       ((= 2 message-id)
+        (tts-editor/write-to-editor-buf (format "TTS Message: %s" (gethash "message" json))))
+       ;; error message
+       ((= 3 message-id)
+        (tts-editor/write-to-editor-buf (format "TTS ERROR: [%s] %s %s"
+                                                (gethash "guid" json)
+                                                (gethash "errorMessagePrefix" json)
+                                                (gethash "error" json))))
+       ;; game saved
+       ((= 6 message-id)
+        (tts-editor/write-to-editor-buf "Game Saved"))
+       
+       (t
+        (tts-editor/write-to-editor-buf clean-string)))
+      (kill-buffer))))
 
 (defun tts-editor/collect-scripts ()
   "Collect buffer contents as script data objects for sending to TTS."
