@@ -243,6 +243,31 @@
     (puthash "messageID" 0 req)
     (tts-editor/send-to-tts req)))
 
+(defun tts-editor/send-custom-message (data)
+  "Send custom message to TTS with DATA."
+  (interactive)
+  (tts-editor/write-to-editor-buf "Sending custom message")
+  (let ((json-object-type 'hash-table)
+        (json-array-type 'list)
+        (json-key-type 'string)
+        (req (make-hash-table :test 'equal)))
+    (puthash "messageID" 2 req)
+    (puthash "customMessage" data req)
+    (tts-editor/send-to-tts req)))
+
+(defun tts-editor/execute-lua-code (guid script)
+  "Execute Lua SCRIPT in TTS with on GUID."
+  (interactive)
+  (tts-editor/write-to-editor-buf "Executing lua code")
+  (let ((json-object-type 'hash-table)
+        (json-array-type 'list)
+        (json-key-type 'string)
+        (req (make-hash-table :test 'equal)))
+    (puthash "messageID" 3 req)
+    (puthash "guid" guid req)
+    (puthash "script" script req)
+    (tts-editor/send-to-tts req)))
+
 (defun tts-editor/save-and-play ()
   "Send scripts to TTS external and reload."
   (interactive)
