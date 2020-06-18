@@ -154,28 +154,42 @@
        ;; single object script
        ((= 0 message-id)
         (tts-editor/handle-load scripts)
-        (tts-editor/write-to-editor-buf "Object Script Loaded"))
+        (tts-editor/write-to-editor-buf "Object script loaded"))
        ;; game save loaded
        ((= 1 message-id)
-        (tts-editor/write-to-editor-buf (concat "new save path: " save-path))
-        (tts-editor/write-to-editor-buf (concat "current save path: " tts-editor/current-save))
-        (if (not (string= save-path tts-editor/current-save))
-            (tts-editor/clear-buffers))
+        (unless (string= save-path tts-editor/current-save)
+          (tts-editor/write-to-editor-buf (concat "New game loaded: " save-path))
+          (tts-editor/clear-buffers))
         (setq tts-editor/current-save save-path)
         (tts-editor/handle-load scripts)
-        (tts-editor/write-to-editor-buf "Scripts Loaded"))
+        (tts-editor/write-to-editor-buf "Scripts loaded"))
        ;; print/debug message
        ((= 2 message-id)
-        (tts-editor/write-to-editor-buf (format "TTS Message: %s" (gethash "message" json))))
+        (tts-editor/write-to-editor-buf (format "TTS message: %s" (gethash "message" json))))
        ;; error message
        ((= 3 message-id)
         (tts-editor/write-to-editor-buf (format "TTS ERROR: [%s] %s %s"
                                                 (gethash "guid" json)
                                                 (gethash "errorMessagePrefix" json)
                                                 (gethash "error" json))))
+       ;; custom message
+       ((= 4 message-id)
+        (maphash
+         (lambda (k v)
+           (tts-editor/write-to-editor-buf (format "Custom message: %s=%s" k v)))
+         (gethash "customMessage" json)))
+       
+       ;; return message
+       ((= 5 message-id)
+        (tts-editor/write-to-editor-buf (format "Return message: %s" (gethash "returnValue" json))))
+       
        ;; game saved
        ((= 6 message-id)
-        (tts-editor/write-to-editor-buf "Game Saved"))
+        (tts-editor/write-to-editor-buf "Game saved"))
+       
+       ;; object created
+       ((= 7 message-id)
+        (tts-editor/write-to-editor-buf (format "Object created: guid=%s" (gethash "guid" json))))
        
        (t
         (tts-editor/write-to-editor-buf clean-string)))
