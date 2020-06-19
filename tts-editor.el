@@ -102,7 +102,7 @@
   (dolist (script scripts)
     (let* ((obj-name (gethash "name" script))
            
-           (bufname-base (format "%s%s" obj-name (if (string= obj-name "Global") "" (format "-%s"(gethash "guid" script)))))
+           (bufname-base (format "%s%s" obj-name (if (string= obj-name "Global") "" (format "/%s"(gethash "guid" script)))))
            (bufname-script (format "%s.lua" bufname-base))
            (bufname-ui (format "%s.xml" bufname-base))
            (data-script (gethash "script" script))
@@ -206,7 +206,7 @@
             (bufname (buffer-name buf)))
         (when bufname
           (save-match-data
-            (and (string-match "^\\*tts-editor/\\([^-.]+\\)-?\\([0-9a-f]+\\)?\\.\\(lua\\|xml\\)\\*$" bufname)
+            (and (string-match "^\\*tts-editor/\\([^/.]+\\)/?\\([0-9a-f]+\\)?\\.\\(lua\\|xml\\)\\*$" bufname)
                  (setq obj-name (match-string 1 bufname)
                        obj-guid (or (match-string 2 bufname) "-1")
                        script-type (match-string 3 bufname))))
