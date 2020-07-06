@@ -19,9 +19,9 @@
 
   - [X] Handle script loading on game save load
   - [X] Handle single object script editor loading
-  - [ ] Handle log/error messages
-  - [ ] Handle custom/scripting messages?
+  - [X] Handle log/error messages
+  - [X] Handle custom/scripting messages
   - [X] Send updated scripts to TTS
-  - [ ] Send custom messages?
+  - [X] Send custom messages
 
     
