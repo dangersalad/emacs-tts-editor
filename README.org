@@ -15,6 +15,23 @@
                    tts-editor/listen-stop))
   #+END_SRC
 
+  
+* Usage
+
+  Start the server with ~M-x tts-editor/listen-start~. You will see
+  messages and other information in the ~*tts-editor*~ buffer.
+
+  In the generated buffers, the ~C-x C-s~ keybinding will performe a
+  "Save and Play" on all of the script/UI files and reload them
+  all. To save your buffers to your file system, you can use the ~C-x
+  C-w~ (~write-file~) binding.
+
+  You can use ~M-x tts-editor/reload~ to reload the files in the
+  current save.
+
+  ~M-x tts-editor/listen-stop~ will close the server and remove all
+  script buffers.
+
 * Progress
 
   - [X] Handle script loading on game save load
